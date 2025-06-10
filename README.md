@@ -1,138 +1,134 @@
 # Self-Hosted n8n Setup
 
-This repository contains the configuration for running a self-hosted n8n instance with MongoDB and Redis. It's compatible with various hosting platforms.
+This repository contains the configuration for running a self-hosted n8n instance with MongoDB. Redis is optional and can be added for production deployments.
 
-## Free Deployment Options
+## Deployment Options
 
-### 1. Render
+### 1. Basic Setup (Without Redis)
 
-1. Create a new Web Service
-2. Connect your GitHub repository
-3. Set the following:
-   - Environment: Docker
-   - Build Command: `docker-compose build`
-   - Start Command: `docker-compose up`
-4. Add environment variables:
-   ```env
-   N8N_HOST=your-render-app-url
-   N8N_PROTOCOL=https
-   N8N_EDITOR_BASE_URL=https://your-render-app-url
-   MONGODB_URL=your-mongodb-url
-   REDIS_HOST=your-redis-host
-   REDIS_PORT=6379
-   REDIS_PASSWORD=your-redis-password
-   ```
+- Simpler configuration
+- Good for:
+  - Small to medium workflows
+  - Single instance deployments
+  - Testing and development
+  - Simple automation tasks
+- Uses in-memory queue by default
 
-### 2. Fly.io
+### 2. Production Setup (With Redis)
 
-1. Install Fly CLI: `curl -L https://fly.io/install.sh | sh`
-2. Login: `fly auth login`
-3. Launch app: `fly launch`
-4. Set secrets:
+- More robust configuration
+- Better for:
+  - Multiple instances
+  - High-load scenarios
+  - Production environments
+  - Workflows with many concurrent executions
+- Requires Redis configuration
+
+## Prerequisites
+
+- Docker
+- Docker Compose
+- Git
+- MongoDB (required)
+- Redis (optional, for production)
+
+## Setup Instructions
+
+1. Clone this repository:
+
    ```bash
-   fly secrets set N8N_HOST=your-fly-app-url
-   fly secrets set N8N_PROTOCOL=https
-   fly secrets set MONGODB_URL=your-mongodb-url
-   fly secrets set REDIS_HOST=your-redis-host
-   fly secrets set REDIS_PASSWORD=your-redis-password
+   git clone <repository-url>
+   cd self-hosted-n8n
    ```
 
-### 3. Oracle Cloud Free Tier
+2. Create a `.env` file with the following content (replace the values with your own):
 
-1. Create a VM instance
-2. Install Docker and Docker Compose
-3. Clone this repository
-4. Set up environment variables
-5. Run with `docker-compose up -d`
+   ```env
+   # n8n Configuration
+   N8N_HOST=localhost
+   N8N_PROTOCOL=http
+   N8N_PORT=5678
+   N8N_USER_MANAGEMENT_DISABLED=false
+   N8N_BASIC_AUTH_ACTIVE=true
+   N8N_BASIC_AUTH_USER=admin
+   N8N_BASIC_AUTH_PASSWORD=your_secure_password
+   N8N_ENCRYPTION_KEY=your_32_character_encryption_key
+   N8N_DIAGNOSTICS_ENABLED=false
+   N8N_DIAGNOSTICS_CONFIG_ENABLED=false
+   N8N_PAYLOAD_SIZE_MAX=16MB
+   EXECUTIONS_PROCESS=main
+   EXECUTIONS_MODE=regular
+   GENERIC_TIMEZONE=UTC
 
-### 4. Google Cloud Run
+   # MongoDB Configuration
+   MONGO_USER=n8n
+   MONGO_PASSWORD=your_secure_mongodb_password
+   MONGO_DB=n8n
+   MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=admin
 
-1. Enable Cloud Run API
-2. Build and push Docker image
-3. Deploy to Cloud Run
-4. Set environment variables in Cloud Run console
+   # Redis Configuration (Optional, for production)
+   # REDIS_HOST=redis
+   # REDIS_PORT=6379
+   # REDIS_PASSWORD=your_secure_redis_password
+   ```
 
-### 5. Hetzner Cloud (Student)
+3. Create the data directories:
 
-1. Create account with student verification
-2. Create a new project
-3. Deploy a new server
-4. Install Docker and Docker Compose
-5. Deploy using this configuration
+   ```bash
+   mkdir -p data/n8n data/mongodb
+   ```
 
-## Environment Variables
+4. Start the services:
 
-Required variables for all platforms:
+   ```bash
+   docker-compose up -d
+   ```
 
-```env
-# n8n Configuration
-N8N_HOST=your-app-url
-N8N_PROTOCOL=https
-N8N_EDITOR_BASE_URL=https://your-app-url
-N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=your_secure_password
-N8N_ENCRYPTION_KEY=your_32_character_encryption_key
-N8N_DIAGNOSTICS_ENABLED=false
-N8N_DIAGNOSTICS_CONFIG_ENABLED=false
-N8N_PAYLOAD_SIZE_MAX=16MB
-EXECUTIONS_PROCESS=main
-EXECUTIONS_MODE=regular
-GENERIC_TIMEZONE=UTC
-NODE_ENV=production
+5. Access n8n at `http://localhost:5678`
 
-# Database Configuration
-MONGODB_URL=your-mongodb-url
-REDIS_HOST=your-redis-host
-REDIS_PORT=6379
-REDIS_PASSWORD=your-redis-password
-```
+## Adding Redis (Optional)
 
-## Platform-Specific Considerations
+To add Redis for production use:
 
-### Render
+1. Uncomment Redis configuration in `.env`
+2. Add Redis service to docker-compose.yml:
 
-- Free tier includes 750 hours/month
-- Automatic HTTPS
-- Built-in MongoDB and Redis
-- Automatic deployments
+   ```yaml
+   redis:
+     image: redis:7-alpine
+     restart: always
+     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+     volumes:
+       - ./data/redis:/data
+     networks:
+       - n8n-network
+     healthcheck:
+       test: ["CMD", "redis-cli", "ping"]
+       interval: 30s
+       timeout: 10s
+       retries: 3
+   ```
 
-### Fly.io
+3. Add Redis environment variables to n8n service:
 
-- Free tier includes 3 shared VMs
-- Global edge network
-- Automatic HTTPS
-- Good for global distribution
+   ```yaml
+   - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
+   - QUEUE_BULL_REDIS_PORT=${REDIS_PORT}
+   - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
+   ```
 
-### Oracle Cloud
-
-- Always free resources
-- Full control over infrastructure
-- Good for learning and development
-- Requires more manual setup
-
-### Google Cloud Run
-
-- Pay only for what you use beyond free tier
-- Automatic scaling
-- Good for variable workloads
-- Requires more configuration
-
-### Hetzner Cloud
-
-- Good performance
-- European data centers
-- Student program available
-- Full root access
+4. Create Redis data directory:
+   ```bash
+   mkdir -p data/redis
+   ```
 
 ## Security Considerations
 
-- Use strong passwords
-- Enable basic authentication
-- Use HTTPS
-- Keep system updated
-- Regular backups
-- Monitor resource usage
+- Change all default passwords
+- Use strong encryption key
+- Consider using HTTPS in production
+- Regularly backup the data directory
+- Keep the system updated
 
 ## Backup and Restore
 
@@ -143,10 +139,8 @@ REDIS_PASSWORD=your-redis-password
 tar -czf n8n_backup.tar.gz data/n8n
 
 # Backup MongoDB
-mongodump --uri=${MONGODB_URL} --out=./mongodb_backup
-
-# Backup Redis
-redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} SAVE
+docker-compose exec mongodb mongodump --username ${MONGO_USER} --password ${MONGO_PASSWORD} --authenticationDatabase admin --db ${MONGO_DB} --out /backup
+docker cp $(docker-compose ps -q mongodb):/backup ./mongodb_backup
 ```
 
 ### Restore
@@ -156,45 +150,34 @@ redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} SAVE
 tar -xzf n8n_backup.tar.gz
 
 # Restore MongoDB
-mongorestore --uri=${MONGODB_URL} ./mongodb_backup
-
-# Restore Redis
-redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} FLUSHALL
-redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} --pipe < dump.rdb
+docker cp ./mongodb_backup $(docker-compose ps -q mongodb):/backup
+docker-compose exec mongodb mongorestore --username ${MONGO_USER} --password ${MONGO_PASSWORD} --authenticationDatabase admin --db ${MONGO_DB} /backup/${MONGO_DB}
 ```
 
 ## Maintenance
 
-- Monitor platform dashboard
-- Check logs regularly
-- Keep dependencies updated
-- Review n8n release notes
-- Monitor resource usage
+- Regularly check logs: `docker-compose logs -f`
+- Monitor disk usage in the data directory
+- Keep Docker images updated
+- Review n8n release notes for updates
 
 ## Troubleshooting
 
 1. If n8n fails to start:
 
-   - Check platform logs
+   - Check logs: `docker-compose logs n8n`
    - Verify environment variables
-   - Check service health
+   - Ensure ports are not in use
 
-2. Database connection issues:
+2. MongoDB connection issues:
 
-   - Verify database URLs
-   - Check service health
-   - Verify network connectivity
+   - Check MongoDB logs: `docker-compose logs mongodb`
+   - Verify database credentials
+   - Check network connectivity
 
-3. Redis connection issues:
-
-   - Verify Redis credentials
-   - Check service health
-   - Verify network connectivity
-
-4. Performance issues:
-   - Check resource usage
-   - Monitor execution logs
-   - Consider platform limits
+3. Performance issues:
+   - Monitor n8n execution logs
+   - Consider adding Redis for better performance
    - Check system resources
 
 ## License
