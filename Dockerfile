@@ -1,7 +1,13 @@
 FROM n8nio/n8n:latest
 
+# Switch to root user for package installation
+USER root
+
 # Install curl for healthcheck
 RUN apk add --no-cache curl
+
+# Switch back to node user
+USER node
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -22,9 +28,6 @@ ENV GENERIC_TIMEZONE=UTC
 
 # Create directory for n8n data
 RUN mkdir -p /home/node/.n8n
-
-# Switch to non-root user
-USER node
 
 # Expose port
 EXPOSE 5678
