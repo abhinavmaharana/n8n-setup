@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "env": {
+    "N8N_PORT": "3000",
+    "N8N_PROTOCOL": "https",
+    "N8N_DIAGNOSTICS_ENABLED": "false",
+    "N8N_DIAGNOSTICS_CONFIG_ENABLED": "false",
+    "N8N_PAYLOAD_SIZE_MAX": "16MB",
+    "EXECUTIONS_PROCESS": "main",
+    "EXECUTIONS_MODE": "regular",
+    "NODE_ENV": "production"
+  }
+} 
