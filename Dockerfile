@@ -11,8 +11,12 @@ ENV N8N_BASIC_AUTH_ACTIVE=true
 ENV N8N_BASIC_AUTH_USER=lndautomation@razorpay.com
 ENV N8N_BASIC_AUTH_PASSWORD=razorpay123!@#$%^
 
-# MongoDB Configuration
-ENV DB_TYPE=mongodb
-ENV DB_MONGODB_CONNECTION_URL=mongodb+srv://admin:admin@n8n.qnmxozt.mongodb.net/
+# PostgreSQL Configuration
+ENV DB_TYPE=postgresdb
+ENV DB_POSTGRESDB_HOST=postgres
+ENV DB_POSTGRESDB_PORT=5432
+ENV DB_POSTGRESDB_DATABASE=n8n
+ENV DB_POSTGRESDB_USER=postgres
+ENV DB_POSTGRESDB_PASSWORD=postgres
 
 # The base image already has the correct CMD, so we don't need to override it 
