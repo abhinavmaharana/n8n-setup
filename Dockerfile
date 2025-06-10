@@ -21,10 +21,11 @@ ENV N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-password}
 ENV N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-your-secret-key}
 ENV N8N_DIAGNOSTICS_ENABLED=${N8N_DIAGNOSTICS_ENABLED:-false}
 ENV N8N_DIAGNOSTICS_CONFIG_ENABLED=${N8N_DIAGNOSTICS_CONFIG_ENABLED:-false}
-ENV N8N_PAYLOAD_SIZE_MAX=16MB
+ENV N8N_PAYLOAD_SIZE_MAX=16777216
 ENV EXECUTIONS_PROCESS=main
 ENV EXECUTIONS_MODE=regular
 ENV GENERIC_TIMEZONE=UTC
+ENV N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
 
 # Create directory for n8n data
 RUN mkdir -p /home/node/.n8n
@@ -37,4 +38,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5678/healthz || exit 1
 
 # Start n8n
-CMD ["n8n", "start"] 
+CMD ["/usr/local/bin/n8n", "start"] 
