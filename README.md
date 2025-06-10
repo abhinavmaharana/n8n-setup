@@ -1,132 +1,151 @@
-# Self-Hosted n8n Setup for Railway
+# Self-Hosted n8n Setup
 
-This repository contains the configuration for running a self-hosted n8n instance on Railway with MongoDB and Redis.
+This repository contains the configuration for running a self-hosted n8n instance with MongoDB and Redis. It's compatible with various hosting platforms.
 
-## Prerequisites
+## Free Deployment Options
 
-- Railway account
-- Railway CLI (optional)
-- Git
+### 1. Render
 
-## Railway Setup
-
-1. Create a new project in Railway:
-
-   - Go to [Railway Dashboard](https://railway.app/dashboard)
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-
-2. Add the following services to your Railway project:
-
-   - MongoDB (from Railway's database templates)
-   - Redis (from Railway's database templates)
-   - n8n (from this repository)
-
-3. Configure the following environment variables in Railway:
-
+1. Create a new Web Service
+2. Connect your GitHub repository
+3. Set the following:
+   - Environment: Docker
+   - Build Command: `docker-compose build`
+   - Start Command: `docker-compose up`
+4. Add environment variables:
    ```env
-   # n8n Configuration
-   N8N_USER_MANAGEMENT_DISABLED=false
-   N8N_BASIC_AUTH_ACTIVE=true
-   N8N_BASIC_AUTH_USER=admin
-   N8N_BASIC_AUTH_PASSWORD=your_secure_password
-   N8N_ENCRYPTION_KEY=your_32_character_encryption_key
-   N8N_DIAGNOSTICS_ENABLED=false
-   N8N_DIAGNOSTICS_CONFIG_ENABLED=false
-   N8N_PAYLOAD_SIZE_MAX=16MB
-   EXECUTIONS_PROCESS=main
-   EXECUTIONS_MODE=regular
-   GENERIC_TIMEZONE=UTC
-   NODE_ENV=production
-
-   # Railway automatically provides these variables
-   RAILWAY_STATIC_URL=your-railway-app-url
-   PORT=5678
+   N8N_HOST=your-render-app-url
+   N8N_PROTOCOL=https
+   N8N_EDITOR_BASE_URL=https://your-render-app-url
    MONGODB_URL=your-mongodb-url
    REDIS_HOST=your-redis-host
-   REDIS_PORT=your-redis-port
+   REDIS_PORT=6379
    REDIS_PASSWORD=your-redis-password
    ```
 
-## Local Development
+### 2. Fly.io
 
-1. Clone this repository:
-
+1. Install Fly CLI: `curl -L https://fly.io/install.sh | sh`
+2. Login: `fly auth login`
+3. Launch app: `fly launch`
+4. Set secrets:
    ```bash
-   git clone <repository-url>
-   cd self-hosted-n8n
+   fly secrets set N8N_HOST=your-fly-app-url
+   fly secrets set N8N_PROTOCOL=https
+   fly secrets set MONGODB_URL=your-mongodb-url
+   fly secrets set REDIS_HOST=your-redis-host
+   fly secrets set REDIS_PASSWORD=your-redis-password
    ```
 
-2. Create a `.env` file with the following content (replace the values with your own):
+### 3. Oracle Cloud Free Tier
 
-   ```env
-   # n8n Configuration
-   N8N_USER_MANAGEMENT_DISABLED=false
-   N8N_BASIC_AUTH_ACTIVE=true
-   N8N_BASIC_AUTH_USER=admin
-   N8N_BASIC_AUTH_PASSWORD=your_secure_password
-   N8N_ENCRYPTION_KEY=your_32_character_encryption_key
-   N8N_DIAGNOSTICS_ENABLED=false
-   N8N_DIAGNOSTICS_CONFIG_ENABLED=false
-   N8N_PAYLOAD_SIZE_MAX=16MB
-   EXECUTIONS_PROCESS=main
-   EXECUTIONS_MODE=regular
-   GENERIC_TIMEZONE=UTC
-   NODE_ENV=production
+1. Create a VM instance
+2. Install Docker and Docker Compose
+3. Clone this repository
+4. Set up environment variables
+5. Run with `docker-compose up -d`
 
-   # For local development
-   RAILWAY_STATIC_URL=http://localhost:5678
-   PORT=5678
-   MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=admin
-   REDIS_HOST=redis
-   REDIS_PORT=6379
-   REDIS_PASSWORD=your_secure_redis_password
-   ```
+### 4. Google Cloud Run
 
-3. Start the services:
+1. Enable Cloud Run API
+2. Build and push Docker image
+3. Deploy to Cloud Run
+4. Set environment variables in Cloud Run console
 
-   ```bash
-   docker-compose up -d
-   ```
+### 5. Hetzner Cloud (Student)
 
-4. Access n8n at `http://localhost:5678`
+1. Create account with student verification
+2. Create a new project
+3. Deploy a new server
+4. Install Docker and Docker Compose
+5. Deploy using this configuration
 
-## Railway Deployment Features
+## Environment Variables
 
+Required variables for all platforms:
+
+```env
+# n8n Configuration
+N8N_HOST=your-app-url
+N8N_PROTOCOL=https
+N8N_EDITOR_BASE_URL=https://your-app-url
+N8N_BASIC_AUTH_ACTIVE=true
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=your_secure_password
+N8N_ENCRYPTION_KEY=your_32_character_encryption_key
+N8N_DIAGNOSTICS_ENABLED=false
+N8N_DIAGNOSTICS_CONFIG_ENABLED=false
+N8N_PAYLOAD_SIZE_MAX=16MB
+EXECUTIONS_PROCESS=main
+EXECUTIONS_MODE=regular
+GENERIC_TIMEZONE=UTC
+NODE_ENV=production
+
+# Database Configuration
+MONGODB_URL=your-mongodb-url
+REDIS_HOST=your-redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=your-redis-password
+```
+
+## Platform-Specific Considerations
+
+### Render
+
+- Free tier includes 750 hours/month
 - Automatic HTTPS
-- Built-in monitoring
-- Automatic deployments from Git
-- Database backups
-- Easy scaling
-- Persistent storage
-- Health checks
+- Built-in MongoDB and Redis
+- Automatic deployments
+
+### Fly.io
+
+- Free tier includes 3 shared VMs
+- Global edge network
+- Automatic HTTPS
+- Good for global distribution
+
+### Oracle Cloud
+
+- Always free resources
+- Full control over infrastructure
+- Good for learning and development
+- Requires more manual setup
+
+### Google Cloud Run
+
+- Pay only for what you use beyond free tier
+- Automatic scaling
+- Good for variable workloads
+- Requires more configuration
+
+### Hetzner Cloud
+
+- Good performance
+- European data centers
+- Student program available
+- Full root access
 
 ## Security Considerations
 
-- Use strong passwords for all services
+- Use strong passwords
 - Enable basic authentication
-- Use a strong encryption key
-- Keep the system updated
-- Use Railway's built-in security features
-- Disabled diagnostics for better privacy
-- Using health checks for better monitoring
+- Use HTTPS
+- Keep system updated
+- Regular backups
+- Monitor resource usage
 
 ## Backup and Restore
-
-Railway provides automatic backups for MongoDB and Redis. However, you can also perform manual backups:
 
 ### Backup
 
 ```bash
-# Backup n8n data (if using persistent storage)
+# Backup n8n data
 tar -czf n8n_backup.tar.gz data/n8n
 
-# Backup MongoDB (using Railway CLI)
-railway connect
+# Backup MongoDB
 mongodump --uri=${MONGODB_URL} --out=./mongodb_backup
 
-# Backup Redis (using Railway CLI)
-railway connect
+# Backup Redis
 redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} SAVE
 ```
 
@@ -146,37 +165,37 @@ redis-cli -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} --pipe < dump.r
 
 ## Maintenance
 
-- Monitor Railway dashboard for service health
-- Check logs in Railway dashboard
+- Monitor platform dashboard
+- Check logs regularly
 - Keep dependencies updated
 - Review n8n release notes
-- Monitor resource usage in Railway dashboard
+- Monitor resource usage
 
 ## Troubleshooting
 
 1. If n8n fails to start:
 
-   - Check Railway logs
+   - Check platform logs
    - Verify environment variables
-   - Check service health in Railway dashboard
+   - Check service health
 
-2. MongoDB connection issues:
+2. Database connection issues:
 
-   - Verify MongoDB URL in Railway
-   - Check MongoDB service health
+   - Verify database URLs
+   - Check service health
    - Verify network connectivity
 
 3. Redis connection issues:
 
-   - Verify Redis credentials in Railway
-   - Check Redis service health
+   - Verify Redis credentials
+   - Check service health
    - Verify network connectivity
 
 4. Performance issues:
-   - Check resource usage in Railway dashboard
-   - Monitor n8n execution logs
-   - Consider upgrading Railway plan if needed
-   - Check system resources in Railway dashboard
+   - Check resource usage
+   - Monitor execution logs
+   - Consider platform limits
+   - Check system resources
 
 ## License
 
