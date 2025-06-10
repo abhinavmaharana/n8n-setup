@@ -38,4 +38,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5678/healthz || exit 1
 
 # Start n8n
-CMD ["/usr/local/bin/n8n", "start"] 
+CMD ["n8n", "start"] 
